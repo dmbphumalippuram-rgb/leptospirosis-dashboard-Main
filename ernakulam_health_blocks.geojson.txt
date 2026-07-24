@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type": "Feature", "properties": {"Health Blocks": "Angamaly"}, "geometry": {"type": "Polygon", "coordinates": [[[76.35, 10.16], [76.42, 10.16], [76.42, 10.23], [76.35, 10.23], [76.35, 10.16]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Chengamanad"}, "geometry": {"type": "Polygon", "coordinates": [[[76.33, 10.12], [76.40, 10.12], [76.40, 10.18], [76.33, 10.18], [76.33, 10.12]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Cheranalloor"}, "geometry": {"type": "Polygon", "coordinates": [[[76.25, 10.01], [76.32, 10.01], [76.32, 10.08], [76.25, 10.08], [76.25, 10.01]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Ezhikkara"}, "geometry": {"type": "Polygon", "coordinates": [[[76.18, 10.11], [76.25, 10.11], [76.25, 10.17], [76.18, 10.17], [76.18, 10.11]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Kalady"}, "geometry": {"type": "Polygon", "coordinates": [[[76.40, 10.13], [76.47, 10.13], [76.47, 10.20], [76.40, 10.20], [76.40, 10.13]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Keechery"}, "geometry": {"type": "Polygon", "coordinates": [[[76.39, 9.81], [76.47, 9.81], [76.47, 9.88], [76.39, 9.88], [76.39, 9.81]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Kumbalanghi"}, "geometry": {"type": "Polygon", "coordinates": [[[76.25, 9.84], [76.32, 9.84], [76.32, 9.91], [76.25, 9.91], [76.25, 9.84]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Malayidamthuruth"}, "geometry": {"type": "Polygon", "coordinates": [[[76.36, 10.01], [76.43, 10.01], [76.43, 10.07], [76.36, 10.07], [76.36, 10.01]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Malippuram"}, "geometry": {"type": "Polygon", "coordinates": [[[76.18, 9.99], [76.25, 9.99], [76.25, 10.05], [76.18, 10.05], [76.18, 9.99]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Nettoor"}, "geometry": {"type": "Polygon", "coordinates": [[[76.28, 9.89], [76.35, 9.89], [76.35, 9.95], [76.28, 9.95], [76.28, 9.89]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Pallarimangalam"}, "geometry": {"type": "Polygon", "coordinates": [[[76.64, 10.04], [76.72, 10.04], [76.72, 10.11], [76.64, 10.11], [76.64, 10.04]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Pampakuda"}, "geometry": {"type": "Polygon", "coordinates": [[[76.50, 9.83], [76.58, 9.83], [76.58, 9.90], [76.50, 9.90], [76.50, 9.83]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Pandappilly"}, "geometry": {"type": "Polygon", "coordinates": [[[76.58, 9.86], [76.66, 9.86], [76.66, 9.93], [76.58, 9.93], [76.58, 9.86]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Pizhala"}, "geometry": {"type": "Polygon", "coordinates": [[[76.21, 10.02], [76.28, 10.02], [76.28, 10.08], [76.21, 10.08], [76.21, 10.02]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Ramamangalam"}, "geometry": {"type": "Polygon", "coordinates": [[[76.54, 9.82], [76.62, 9.82], [76.62, 9.89], [76.54, 9.89], [76.54, 9.82]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Vadavucode"}, "geometry": {"type": "Polygon", "coordinates": [[[76.40, 9.94], [76.48, 9.94], [76.48, 10.01], [76.40, 10.01], [76.40, 9.94]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Varappetty"}, "geometry": {"type": "Polygon", "coordinates": [[[76.61, 9.99], [76.69, 9.99], [76.69, 10.06], [76.61, 10.06], [76.61, 9.99]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Varappuzha"}, "geometry": {"type": "Polygon", "coordinates": [[[76.23, 10.04], [76.30, 10.04], [76.30, 10.11], [76.23, 10.11], [76.23, 10.04]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Vengoor"}, "geometry": {"type": "Polygon", "coordinates": [[[76.51, 10.15], [76.59, 10.15], [76.59, 10.22], [76.51, 10.22], [76.51, 10.15]]]}},
+    {"type": "Feature", "properties": {"Health Blocks": "Kochi Corporation"}, "geometry": {"type": "Polygon", "coordinates": [[[76.21, 9.93], [76.28, 9.93], [76.28, 10.00], [76.21, 10.00], [76.21, 9.93]]]}}
+  ]
+}
