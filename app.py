@@ -51,17 +51,27 @@ def load_data():
 
 @st.cache_data
 def load_geojson_if_exists(df):
-    geojson_path = "ernakulam_health_blocks.geojson" # PLUG YOUR GEOJSON PATH HERE
+    geojson_path = "ernakulam.geojson"
     
     if os.path.exists(geojson_path):
         gdf = gpd.read_file(geojson_path).to_crs(epsg=4326)
+        
+        # Identify region name column from OSM Kerala attributes
+        possible_cols = ['name', 'LSGD', 'BLOCK_NAME', 'PANCHAYAT', 'shapeName', 'Health Blocks']
+        matched_col = next((c for c in possible_cols if c in gdf.columns), gdf.columns[0])
+        
+        gdf['Health Blocks'] = gdf[matched_col]
+        
+        # Merge GIS geometry with disease incidence
         gdf = gdf.merge(df, on='Health Blocks', how='inner')
+        
+        # Compute exact centroids
         centroids = gdf.geometry.centroid
         gdf['centroid_lat'] = centroids.y
         gdf['centroid_lon'] = centroids.x
         return gdf, True
     else:
-        # Create Point Geodataframe if no GeoJSON boundary file exists
+        # Fallback if file is missing
         geometry = [Point(xy) for xy in zip(df['longitude'], df['latitude'])]
         gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
         gdf['centroid_lat'] = df['latitude']
