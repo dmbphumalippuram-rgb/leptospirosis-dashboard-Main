@@ -7,23 +7,82 @@ from shapely.geometry import Point
 import os
 
 # ==============================================================================
-# 1. PAGE CONFIGURATION & METRICS DISPLAY
+# 1. PAGE CONFIGURATION & CUSTOM CSS STYLING
 # ==============================================================================
 st.set_page_config(
-    page_title="Ernakulam Leptospirosis Hotspot Dashboard",
-    page_icon="🦠",
-    layout="wide"
+    page_title="Leptospirosis Health Intelligence",
+    page_icon="🩸",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("🦠 Leptospirosis Hotspot Tracker & GIS Dashboard")
-st.markdown("Analyze block-level Leptospirosis incidence in Ernakulam District, identify hotspots (>5 cases), and inspect spatial distribution.")
+# Custom CSS Injection for Modern Dashboard UI
+st.markdown("""
+    <style>
+        /* Main page background refinement */
+        .main {
+            background-color: #f8f9fa;
+        }
+        
+        /* Glassmorphic Metric Cards */
+        [data-testid="stMetricValue"] {
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+        }
+        
+        div[data-testid="metric-container"] {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        div[data-testid="metric-container"]:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* Header Banner Styling */
+        .header-container {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            padding: 24px;
+            border-radius: 14px;
+            color: white;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header-title {
+            font-size: 30px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        
+        .header-subtitle {
+            font-size: 15px;
+            color: #93c5fd;
+            margin-top: 5px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Custom Header Banner
+st.markdown("""
+    <div class="header-container">
+        <div class="header-title">🩸 Leptospirosis Epidemiological Tracker</div>
+        <div class="header-subtitle">Ernakulam District • Real-time Spatial Risk Analysis & Hotspot Monitoring</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. ACCURATE ERNAKULAM HEALTH BLOCK DATA (WITH REAL LAT/LON)
+# 2. DATA LOADING & GIS PREPARATION
 # ==============================================================================
 @st.cache_data
 def load_data():
-    # Accurate Geographic Coordinates for Ernakulam Health Blocks
     raw_data = {
         'Health Blocks': [
             'Angamaly', 'Chengamanad', 'Cheranalloor', 'Ezhikkara', 'Kalady',
@@ -51,27 +110,30 @@ def load_data():
 
 @st.cache_data
 def load_geojson_if_exists(df):
+    # Search for available GeoJSON files
     geojson_path = "ernakulam.geojson"
+    if not os.path.exists(geojson_path):
+        geojson_path = "ernakulam_health_blocks.geojson"
     
     if os.path.exists(geojson_path):
         gdf = gpd.read_file(geojson_path).to_crs(epsg=4326)
         
-        # Identify region name column from OSM Kerala attributes
+        # Identify matching region name column from attributes
         possible_cols = ['name', 'LSGD', 'BLOCK_NAME', 'PANCHAYAT', 'shapeName', 'Health Blocks']
         matched_col = next((c for c in possible_cols if c in gdf.columns), gdf.columns[0])
         
         gdf['Health Blocks'] = gdf[matched_col]
         
-        # Merge GIS geometry with disease incidence
+        # Merge GIS geometry with case count dataset
         gdf = gdf.merge(df, on='Health Blocks', how='inner')
         
-        # Compute exact centroids
+        # Extract numeric lat/lon coordinates for centroids to avoid JSON serialization issues
         centroids = gdf.geometry.centroid
         gdf['centroid_lat'] = centroids.y
         gdf['centroid_lon'] = centroids.x
         return gdf, True
     else:
-        # Fallback if file is missing
+        # Fallback to Point mode if no GeoJSON boundary file is present
         geometry = [Point(xy) for xy in zip(df['longitude'], df['latitude'])]
         gdf = gpd.GeoDataFrame(df, geometry=geometry, crs="EPSG:4326")
         gdf['centroid_lat'] = df['latitude']
@@ -82,39 +144,80 @@ def load_geojson_if_exists(df):
 df_cases = load_data()
 gdf_merged, has_geojson = load_geojson_if_exists(df_cases)
 
+# ==============================================================================
+# 3. SIDEBAR CONTROLS & FILTERS
+# ==============================================================================
+st.sidebar.header("🕹️ Map Controls & Filters")
+
+# Map Base Layer Selector
+map_style = st.sidebar.selectbox(
+    "Choose Map Base Layer Style:",
+    options=["CartoDB Dark Matter", "CartoDB Positron", "OpenStreetMap"],
+    index=1
+)
+
+# Dynamic Hotspot Threshold Slider
+hotspot_threshold = st.sidebar.slider(
+    "Hotspot Case Threshold",
+    min_value=1,
+    max_value=15,
+    value=5,
+    help="Blocks with case counts strictly greater than this value are flagged as hotspots."
+)
+
+st.sidebar.markdown("---")
 if not has_geojson:
-    st.info("ℹ️ Running in **Point Marker Mode** using verified Ernakulam coordinates. To view polygon boundary shading, place `ernakulam_health_blocks.geojson` in your project folder.")
+    st.sidebar.warning("⚠️ Running in **Point Mode**. Upload `ernakulam.geojson` to enable polygon boundaries.")
+else:
+    st.sidebar.success("✅ **Polygon Mode Active**: Boundaries loaded successfully!")
 
 # ==============================================================================
-# 3. TOP METRICS KPI BAR
+# 4. KPI SUMMARY CARDS
 # ==============================================================================
 col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
-col_kpi1.metric("Total Cases", int(gdf_merged['Number of Cases'].sum()))
-col_kpi2.metric("Total Health Blocks", len(gdf_merged))
-col_kpi3.metric("Hotspot Blocks (>5 Cases)", int((gdf_merged['Number of Cases'] > 5).sum()))
-col_kpi4.metric("Highest Incidence", f"{gdf_merged['Number of Cases'].max()} ({gdf_merged.loc[gdf_merged['Number of Cases'].idxmax(), 'Health Blocks']})")
 
-st.markdown("---")
+total_cases = int(gdf_merged['Number of Cases'].sum())
+total_blocks = len(gdf_merged)
+hotspot_count = int((gdf_merged['Number of Cases'] > hotspot_threshold).sum())
+max_row = gdf_merged.loc[gdf_merged['Number of Cases'].idxmax()]
+
+col_kpi1.metric("Total Cumulative Cases", f"{total_cases:,}")
+col_kpi2.metric("Total Blocks Monitored", total_blocks)
+col_kpi3.metric(f"Hotspots (>{hotspot_threshold} Cases)", hotspot_count, delta=f"{(hotspot_count/total_blocks)*100:.0f}% of total", delta_color="inverse")
+col_kpi4.metric("Highest Incidence Cluster", f"{max_row['Number of Cases']} Cases", delta=max_row['Health Blocks'], delta_color="off")
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. SIDE-BY-SIDE DASHBOARD LAYOUT (MAP & DATA TABLE)
+# 5. SIDE-BY-SIDE MAIN LAYOUT (MAP & DATA TABLE)
 # ==============================================================================
 left_col, right_col = st.columns([3, 2])
 
+# Map Tile Configuration
+tile_mapping = {
+    "CartoDB Dark Matter": "CartoDB dark_matter",
+    "CartoDB Positron": "CartoDB positron",
+    "OpenStreetMap": "OpenStreetMap"
+}
+
 with left_col:
-    st.subheader("🗺️ Spatial Distribution & Hotspot Map")
+    st.subheader("🗺️ Interactive Spatial Risk Map")
     
-    # Center map over Ernakulam, Kerala
+    # Calculate Center
+    center_lat = gdf_merged['centroid_lat'].mean()
+    center_lon = gdf_merged['centroid_lon'].mean()
+    
+    # Initialize Folium Map
     m = folium.Map(
-        location=[10.00, 76.35],
+        location=[center_lat, center_lon],
         zoom_start=10,
-        tiles="CartoDB positron"
+        tiles=tile_mapping[map_style]
     )
     
-    # Render GeoJSON Boundaries if file is provided
+    # Render Polygon Layer (Filtered to clean attributes only to avoid serialization errors)
     if has_geojson:
         choropleth = folium.Choropleth(
-            geo_data=gdf_merged,
+            geo_data=gdf_merged[['Health Blocks', 'Number of Cases', 'geometry']],
             name="Choropleth Intensity",
             data=gdf_merged,
             columns=["Health Blocks", "Number of Cases"],
@@ -123,71 +226,73 @@ with left_col:
             fill_opacity=0.4,
             line_opacity=0.6,
             line_weight=1.5,
-            legend_name="Leptospirosis Cases",
             highlight=True
         ).add_to(m)
 
+        # Tooltip for hovered boundaries
         choropleth.geojson.add_child(
             folium.features.GeoJsonTooltip(
                 fields=["Health Blocks", "Number of Cases"],
-                aliases=["Block:", "Cases:"],
+                aliases=["Health Block:", "Reported Cases:"],
                 style="font-family: sans-serif; font-size: 12px; padding: 6px;"
             )
         )
 
-    # Render Circle Markers for all Blocks (Red for Hotspots >5, Blue for Low Incidence <=5)
+    # Render Circle Markers for Hotspots & Low Incidence Blocks
     for _, row in gdf_merged.iterrows():
         lat = row['centroid_lat']
         lon = row['centroid_lon']
         cases = row['Number of Cases']
         block_name = row['Health Blocks']
-        is_hotspot = cases > 5
+        is_hotspot = cases > hotspot_threshold
         
-        # Color coding: Red for Hotspots, Light Blue for Non-Hotspots
-        color_code = "#D32F2F" if is_hotspot else "#1E88E5"
-        fill_code = "#FF1744" if is_hotspot else "#64B5F6"
+        # Dynamic Styling
+        color_code = "#FF2A6D" if is_hotspot else "#05D5E7"
+        fill_code = "#FF0055" if is_hotspot else "#00F5D4"
         
         folium.CircleMarker(
             location=[lat, lon],
-            radius=6 + (cases * 0.5), # Scale radius with case volume
+            radius=5 + (cases * 0.7),
             color=color_code,
             fill=True,
             fill_color=fill_code,
-            fill_opacity=0.85,
-            weight=2,
-            tooltip=f"<b>{'HOTSPOT: ' if is_hotspot else ''}{block_name}</b><br>Cases: {cases}",
+            fill_opacity=0.85 if is_hotspot else 0.4,
+            weight=2 if is_hotspot else 1,
+            tooltip=f"<b>{'⚠️ HOTSPOT: ' if is_hotspot else ''}{block_name}</b><br>Cases: {cases}",
             popup=folium.Popup(
-                f"<div style='font-family: sans-serif; min-width: 130px;'>"
+                f"<div style='font-family: sans-serif; min-width: 140px;'>"
                 f"<h4 style='margin:0; color:{color_code};'>{block_name}</h4>"
-                f"<hr style='margin:5px 0;'>"
-                f"<b>Status:</b> {'⚠️ Hotspot (>5)' if is_hotspot else 'Normal (≤5)'}<br>"
-                f"<b>Total Cases:</b> {cases}"
+                f"<hr style='margin:6px 0; border:0; border-top:1px solid #ccc;'>"
+                f"<b>Status:</b> {'⚠️ High Risk Hotspot' if is_hotspot else '✅ Low/Moderate'}<br>"
+                f"<b>Reported Cases:</b> <span style='font-size:14px; font-weight:bold;'>{cases}</span>"
                 f"</div>", 
                 max_width=250
             )
         ).add_to(m)
 
-    st_folium(m, width="100%", height=500)
+    st_folium(m, width="100%", height=520)
 
 with right_col:
-    st.subheader("📋 Block Data Breakdown")
+    st.subheader("📊 Block Case Breakdown")
     
-    search_query = st.text_input("🔍 Search Health Block", "")
+    # Search Widget
+    search_query = st.text_input("🔍 Quick Search Block Name", "")
     
     filtered_df = df_cases.copy()
     if search_query:
         filtered_df = filtered_df[filtered_df['Health Blocks'].str.contains(search_query, case=False)]
         
-    show_hotspots_only = st.checkbox("Show Hotspots Only (>5 Cases)")
+    show_hotspots_only = st.checkbox(f"Filter Hotspots Only (>{hotspot_threshold} Cases)")
     if show_hotspots_only:
-        filtered_df = filtered_df[filtered_df['Number of Cases'] > 5]
+        filtered_df = filtered_df[filtered_df['Number of Cases'] > hotspot_threshold]
 
+    # Data Table Rendering
     st.dataframe(
         filtered_df[['Health Blocks', 'Number of Cases']].sort_values(by="Number of Cases", ascending=False),
         column_config={
-            "Health Blocks": st.column_config.TextColumn("Health Block"),
+            "Health Blocks": st.column_config.TextColumn("Health Block Name"),
             "Number of Cases": st.column_config.ProgressColumn(
-                "Number of Cases",
+                "Infection Count",
                 help="Total reported Leptospirosis cases",
                 format="%d",
                 min_value=0,
@@ -196,5 +301,5 @@ with right_col:
         },
         use_container_width=True,
         hide_index=True,
-        height=400
+        height=430
     )
